@@ -6,6 +6,7 @@
 - Provides at-a-glance customer information so users can quickly identify a customer, and is directly clickable to select that customer
 - Surfaces customer domains, making this the foundation component for future domain health monitoring integration
 - Incorporates `requirements/customer-card-enhancement.md`: selection/click behavior is a native part of this component's spec, not a separate follow-on document — `CustomerSelector` owns *which* customer is selected, but `CustomerCard` owns rendering its own click target and highlighted appearance
+- Deliberate divergence from `requirements/customer-card-enhancement.md`'s "border highlight, background change" for the selected state: the card background is now tinted by the **health score**, so background is no longer available to signal selection. Selection is carried by a border + ring instead, which keeps both signals legible on the same card at the same time
 - The health score displayed here is expected to eventually be produced by `health-score-calculator-spec.md`'s `calculateHealthScore`; see that spec's Context section for how the two stay in sync. This component only renders whatever numeric `healthScore` and color it's given — it has no dependency on the calculator itself
 
 ## Requirements
@@ -14,11 +15,12 @@
 - Display the customer's name, company name, and health score (0-100)
 - Display the customer's domains (websites) to give health monitoring context
 - Render a color-coded health indicator derived from the health score
+- Tint the whole card background and border from the health score, so a card's health reads at a glance without locating the indicator
 - Display a domain count when the customer has more than one domain
 - Handle customers with a single domain and customers with multiple domains
 - Handle customers with no `domains` value gracefully (the field is optional), without rendering an empty domain section or a count
 - Clicking the card selects it; clicking an already-selected card deselects it (single-selection toggle)
-- Render a visually distinct highlighted state (border/background change) when selected, driven by a `selected` prop — the card does not track its own selection state internally, since only one card across the whole list may be selected at a time and that invariant is `CustomerSelector`'s responsibility
+- Render a visually distinct highlighted state (border color + ring, *not* a background change) when selected, driven by a `selected` prop — the card does not track its own selection state internally, since only one card across the whole list may be selected at a time and that invariant is `CustomerSelector`'s responsibility
 - Report selection/deselection to the parent via an `onSelect` callback prop; `CustomerCard` never mutates selection state itself, it only requests a change
 
 ### User Interface Requirements
@@ -26,6 +28,7 @@
   - Red: 0-30 (poor health score)
   - Yellow: 31-70 (moderate health score)
   - Green: 71-100 (good health score)
+- The health color is applied at two levels: a light tint on the card background/border, and a saturated dot plus score badge in the header
 - Health score value is shown as a number in addition to the color, so color is not the only carrier of meaning
 - Clean, card-based visual design with a distinct region for domain information
 - Clear typography hierarchy: customer name is most prominent, then company name, then health score and domain details
@@ -58,6 +61,9 @@
 ### Design Constraints
 - Responsive from a 320px minimum viewport width upward
 - Health indicator colors use Tailwind's standard red / yellow / green scales for consistency with the rest of the dashboard
+- Card background/border tints use the light end of those scales (`-50` background, `-200` border) so that card text and the health dot keep their AA contrast ratios; the saturated shades stay on the dot and badge
+- Selection styling must not use background color, since the background is reserved for health; it uses `border-blue-600` plus `ring-2 ring-blue-600`
+- The keyboard focus indicator must be visually distinct from the selection ring (selection uses `ring-*`, focus uses `outline-*`) so a focused-but-unselected card is not mistaken for a selected one
 - Consistent spacing using the Tailwind spacing scale; no hard-coded pixel values where a scale token applies
 - No layout shift between a customer with one domain and a customer with several
 
@@ -85,6 +91,8 @@
 - [ ] Renders correctly for a customer with exactly one domain
 - [ ] Renders correctly, with no empty domain section or count, when `domains` is absent or empty
 - [ ] Health indicator color matches the specification: red (0-30), yellow (31-70), green (71-100)
+- [ ] Card background and border are tinted by the same health bucket as the indicator
+- [ ] Card text and the health dot meet AA contrast against the tinted background (4.5:1 text, 3:1 indicator), verified for all three tints
 - [ ] Threshold boundary values 0, 30, 31, 70, 71, and 100 each map to the correct color
 - [ ] Health score is readable as a number, not conveyed by color alone
 - [ ] Layout is usable and uncut from 320px width up through desktop widths
@@ -92,6 +100,8 @@
 - [ ] `CustomerCardProps` is defined and exported, and the component reuses the `Customer` interface from `src/data/mock-customers.ts`
 - [ ] Component renders from `mockCustomers` data without runtime errors
 - [ ] Clicking an unselected card calls `onSelect` with its customer id and, once `selected` is passed back in as `true`, renders the highlighted state
+- [ ] A selected card still shows its health tint — selection does not overwrite or hide the health color
+- [ ] The selection ring and the keyboard focus indicator are distinguishable from each other
 - [ ] Clicking an already-selected card calls `onSelect` again (toggle-off), consistent with single-selection semantics owned by `CustomerSelector`
 - [ ] Card renders identically whether or not `selected`/`onSelect` are provided (no crash when used as a plain display card, e.g. in `CustomerList`)
 - [ ] Card is operable via keyboard alone (Tab to focus, Enter/Space to select) with a visible focus indicator, per `accessibility-spec.md`
