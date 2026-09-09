@@ -24,3 +24,9 @@ Use kebab-case for specification files:
 - `domain-health-widget-spec.md`
 
 Each specification should include Context, Requirements, Constraints, and Acceptance Criteria sections — review the model's output to confirm they're present and complete.
+
+## How to Read These Specs (What vs. How)
+
+These specs intentionally fix the *what* — behavior, interfaces/props, business rules and thresholds, integration contracts between components, and acceptance criteria — because those need to agree across multiple specs and multiple implementation sessions. They intentionally leave the *how* open: internal code organization, exact helper decomposition beyond what's stated, styling details not covered by a named design token, and algorithm implementation choices are left to whoever (or whichever agent) implements the spec.
+
+When implementing from one of these specs, treat anything not stated as a judgment call, not a gap to ask about. Only stop to check in when two reasonable readings of the spec would produce materially different, incompatible behavior (e.g. an ambiguous integration contract) — not for routine implementation decisions. Don't add extra self-verification passes beyond the spec's own Acceptance Criteria; give the model the whole spec and let it complete the feature end-to-end.
